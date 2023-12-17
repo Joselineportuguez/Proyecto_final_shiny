@@ -20,6 +20,84 @@ datos_menstruaccion <- readr::read_csv("https://raw.githubusercontent.com/cienci
 View(datos_menstruaccion)
 ```
 
+```{r}
+ui <- dashboardPage(
+  skin = "violet",  
+  dashboardHeader(title = "Productos para la mestruación"),
+  dashboardSidebar(
+    selectInput("Categoría", "Categoría:", choices = unique(datos_menstruaccion$Categoría)),
+    selectInput("Marca", "Marca:", choices = unique(datos_menstruaccion$Marca)),
+    sliderInput("Presentación", "Elija la presentación:", min = 8, max = 30, value = c(8, 30)),
+    selectInput("Sucursal", "Sucursal:", choices = unique(datos_menstruaccion$Sucursal), selected = NULL),
+    column(width = 12, offset = 2,
+           downloadButton("downloadDATOS", "Descargar Datos")
+    )
+  ),
+  dashboardBody(
+    skin ="violet",
+    box(
+      status = "primary",
+      solidHeader = TRUE,
+      plotlyOutput("Categoría"),
+      style = "color: white; background-color: #FFFFFF;"  
+    ),
+    
+    box(
+      status = "primary",
+      solidHeader = TRUE,
+      plotlyOutput("Marca"),
+      style = "color: black; background-color: #FFFFFF;"   
+    ),
+    box(
+      title = "TABLA",
+      status = "primary",
+      solidHeader = TRUE,
+      DTOutput("filtered_table")
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  filtered_data <- reactive({
+    datos_menstruaccion |> 
+      filter(Marca == input$Marca , precio_por_unidad == input$precio_por_unidad)
+  })
+  
+  
+  output$Presentación <- renderPlotly({
+    ggplotly(ggplot(filtered_data(), aes(x = Categoría, y = Presentación, color = factor(Categoría))) +
+               geom_point() +
+               labs(title = "Presentación según la categoría")
+    )
+  })
+  
+  
+  output$popularity_duration_plot <- renderPlotly({
+    ggplotly(ggplot(filtered_data(), aes(x = Marca, y = precio_por_unidad, color = factor(Marca))) +
+               geom_point() +
+               labs(title = "Precio por unidad según la marca")
+    )
+  })
+  
+  
+  output$filtered_table <- renderDT({
+    datatable(filtered_data(), options = list(scrollX = TRUE))
+  })
+  
+  
+  output$downloadDATOS <- downloadHandler(
+    filename = function() {
+      paste("datos_filtrados_", input$Marca, "_", input$Categoría, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(filtered_data(), file, row.names = FALSE)
+    }
+  )
+}
+
+shinyApp(ui, server)
+```
 
 
 
