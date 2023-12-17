@@ -15,6 +15,12 @@ library(DT)
 library(readr)
 ```
 
+```{r}
+datos_menstruaccion <- readr::read_csv("https://raw.githubusercontent.com/cienciadedatos/datos-de-miercoles/master/datos/2019/2019-12-04/menstruaccion.csv")
+View(datos_menstruaccion)
+```
+
+
 
 
 
